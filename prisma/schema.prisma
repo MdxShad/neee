@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -42,27 +42,27 @@ enum PaymentStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  name         String
-  role         Role
-  parentId     String?
-  parent       User?    @relation("UserHierarchy", fields: [parentId], references: [id])
-  children     User[]   @relation("UserHierarchy")
+  id       String  @id @default(cuid())
+  userId   String  @unique
+  name     String
+  role     Role
+  parentId String?
+  parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
+  children User[]  @relation("UserHierarchy")
 
-  email        String?
-  mobile       String?
-  address      String?
-  idProofUrl   String?
-  isActive     Boolean  @default(true)
+  email      String?
+  mobile     String?
+  address    String?
+  idProofUrl String?
+  isActive   Boolean @default(true)
 
   passwordHash String
   permissions  Json?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  sessions     Session[]
+  sessions Session[]
 
   // Admissions
   admissionsCreated      Admission[] @relation("AdmissionsCreatedBy")
@@ -70,6 +70,7 @@ model User {
   admissionsAsAgent      Admission[] @relation("AdmissionsAgent")
 
   agentCommissions AgentCommission[] @relation("AgentCommissionAgent")
+  agentLedgers     AgentLedger[]
 
   expensesCreated Expense[] @relation("ExpenseCreatedBy")
 }
@@ -86,7 +87,7 @@ model Session {
 }
 
 model University {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   name          String
   location      String?
   contactPerson String?
@@ -95,17 +96,18 @@ model University {
   address       String?
   notes         String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  courses       Course[]
-  admissions    Admission[]
+  courses           Course[]
+  admissions        Admission[]
+  universityLedgers UniversityLedger[]
 }
 
 model Course {
-  id            String   @id @default(cuid())
-  universityId  String
-  university    University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
 
   name          String
   duration      String?
@@ -115,8 +117,8 @@ model Course {
   session       String?
   notes         String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   agentCommissions AgentCommission[]
   admissions       Admission[]
@@ -125,73 +127,73 @@ model Course {
 }
 
 model AgentCommission {
-  id        String         @id @default(cuid())
-  agentId   String
-  agent     User           @relation("AgentCommissionAgent", fields: [agentId], references: [id], onDelete: Cascade)
-  courseId  String
-  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  agentId  String
+  agent    User   @relation("AgentCommissionAgent", fields: [agentId], references: [id], onDelete: Cascade)
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  type      CommissionType
-  value     Int
+  type  CommissionType
+  value Int
 
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([agentId, courseId])
   @@index([courseId])
 }
 
 model Admission {
-  id             String         @id @default(cuid())
+  id String @id @default(cuid())
 
-  createdById    String
-  createdBy      User           @relation("AdmissionsCreatedBy", fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation("AdmissionsCreatedBy", fields: [createdById], references: [id])
 
-  consultantId   String
-  consultant     User           @relation("AdmissionsConsultant", fields: [consultantId], references: [id])
+  consultantId String
+  consultant   User   @relation("AdmissionsConsultant", fields: [consultantId], references: [id])
 
-  agentId        String?
-  agent          User?          @relation("AdmissionsAgent", fields: [agentId], references: [id])
+  agentId String?
+  agent   User?   @relation("AdmissionsAgent", fields: [agentId], references: [id])
 
-  status         AdmissionStatus @default(SUBMITTED)
+  status AdmissionStatus @default(SUBMITTED)
 
-  studentName    String
-  fatherName     String?
-  mobile         String
-  altMobile      String?
-  address        String?
-  dob            DateTime?
-  gender         String?
+  studentName String
+  fatherName  String?
+  mobile      String
+  altMobile   String?
+  address     String?
+  dob         DateTime?
+  gender      String?
 
-  photoUrl       String?
-  documents      Json?
+  photoUrl  String?
+  documents Json?
 
-  universityId   String
-  university     University     @relation(fields: [universityId], references: [id])
+  universityId String
+  university   University @relation(fields: [universityId], references: [id])
 
-  courseId       String
-  course         Course         @relation(fields: [courseId], references: [id])
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
 
   amountReceived Int
   source         AdmissionSource
 
   // Snapshot fees
-  universityFee           Int
-  displayFee              Int
-  consultancyProfit       Int
+  universityFee     Int
+  displayFee        Int
+  consultancyProfit Int
 
-  agentCommissionType     CommissionType?
-  agentCommissionValue    Int?
-  agentCommissionAmount   Int
+  agentCommissionType   CommissionType?
+  agentCommissionValue  Int?
+  agentCommissionAmount Int
 
-  agentExpensesTotal      Int @default(0)
+  agentExpensesTotal       Int @default(0)
   consultancyExpensesTotal Int @default(0)
-  netProfit               Int @default(0)
+  netProfit                Int @default(0)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  expenses        Expense[]
+  expenses Expense[]
 
   universityLedger UniversityLedger?
   agentLedger      AgentLedger?
@@ -205,22 +207,22 @@ model Admission {
 }
 
 model Expense {
-  id          String      @id @default(cuid())
-  type        ExpenseType
+  id   String      @id @default(cuid())
+  type ExpenseType
 
-  category    String?
-  title       String
-  amount      Int
-  proofUrl    String?
-  date        DateTime    @default(now())
+  category String?
+  title    String
+  amount   Int
+  proofUrl String?
+  date     DateTime @default(now())
 
   admissionId String?
-  admission   Admission?  @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  admission   Admission? @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 
   createdById String?
-  createdBy   User?       @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  createdBy   User?   @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
 
-  createdAt   DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@index([type])
   @@index([date])
@@ -228,53 +230,53 @@ model Expense {
 }
 
 model UniversityLedger {
-  id           String        @id @default(cuid())
-  admissionId  String        @unique
-  admission    Admission     @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  admissionId String    @unique
+  admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 
   universityId String
-  university   University    @relation(fields: [universityId], references: [id])
+  university   University @relation(fields: [universityId], references: [id])
 
   amountPayable Int
-  amountPaid    Int          @default(0)
+  amountPaid    Int           @default(0)
   status        PaymentStatus @default(PENDING)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([universityId])
   @@index([status])
 }
 
 model AgentLedger {
-  id           String        @id @default(cuid())
-  admissionId  String        @unique
-  admission    Admission     @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  admissionId String    @unique
+  admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 
-  agentId      String
-  agent        User          @relation(fields: [agentId], references: [id])
+  agentId String
+  agent   User   @relation(fields: [agentId], references: [id])
 
   commissionAmount Int
-  amountPaid       Int          @default(0)
+  amountPaid       Int           @default(0)
   status           PaymentStatus @default(PENDING)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([agentId])
   @@index([status])
 }
 
 model ProfitLedger {
-  id           String    @id @default(cuid())
-  admissionId  String    @unique
-  admission    Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  admissionId String    @unique
+  admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
 
-  grossProfit        Int
-  agentCommission    Int
-  agentExpenses      Int
+  grossProfit         Int
+  agentCommission     Int
+  agentExpenses       Int
   consultancyExpenses Int
-  netProfit          Int
+  netProfit           Int
 
   createdAt DateTime @default(now())
 }

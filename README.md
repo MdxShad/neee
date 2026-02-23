@@ -1,72 +1,49 @@
 # EduConnect — Consultancy CRM (Web MVP)
 
-This is a **fresh** web-first implementation of your internal consultancy CRM.
+Internal consultancy CRM for managing admissions, fee/profit, agents, ledgers, and expenses.
 
-✅ Roles included:
-- SUPER_ADMIN
-- STAFF (permissions-based)
-- CONSULTANT (main account)
-- AGENT (sub-consultant under a consultant)
+## Roles
+- `SUPER_ADMIN`
+- `STAFF` (permission-based)
+- `CONSULTANT`
+- `AGENT`
 
-✅ Core modules included in this MVP:
-- Direct login (User ID + Password) — no signup
-- University Management (Admin only)
-- Course Management (Admin only)
-- Agent Management (Consultant creates Agents)
-- Agent Commission per Course (Percent / Flat / One-time)
-- Admission Wizard (Consultant/Staff creates admissions)
-- Auto fee/profit calculation
-- Ledgers created on submit (University payable, Agent payable, Profit)
-- Admission Slip PDF download (3 copies: Consultancy/University/Student)
-- Daily Expense Register (simple)
-- Basic dashboards (totals + profit + pending amounts)
+> University has no login. It only receives admission-slip output.
 
----
+## Tech
+- Next.js 14 App Router
+- TypeScript
+- Tailwind CSS
+- Prisma ORM
+- PostgreSQL
+- Cookie-session auth
+- `pdf-lib`
 
-## 1) Prerequisites
-- Node.js 18+ recommended
-
----
-
-## 2) Setup
+## Local Setup (PostgreSQL)
 
 ```bash
-# 1) Install
+# 1) Install dependencies
 npm install
 
-# 2) Environment
+# 2) Configure environment
 cp .env.example .env
 
-# 3) Database + Prisma
-npm run db:generate
-npm run db:push
+# 3) Start PostgreSQL
+docker compose up -d
 
-# 4) Seed SUPER_ADMIN (+ optional consultant)
-npm run db:seed
+# 4) Run migrations
+npx prisma migrate dev
 
-# 5) Run
+# 5) Seed data
+npx prisma db seed
+
+# 6) Start app
 npm run dev
 ```
 
-Open: http://localhost:3000
+Open http://localhost:3000
 
----
+## Default Login (seed defaults)
+- `admin` / `admin123`
 
-## 3) Default login (only if you keep the .env.example values)
-- SUPER_ADMIN: `admin` / `change-me`
-- CONSULTANT: `consultant` / `change-me` (optional seed)
-
-**Important:** Change these before any real use.
-
----
-
-## 4) Folder structure (high level)
-- `src/app` — Next.js App Router pages
-- `src/lib` — auth, db, calculations
-- `prisma/` — schema + seed
-
----
-
-## 5) Notes / Future milestones
-- File uploads (photo/doc proofs) are stubbed as URL fields for now.
-- Reports & marketing posters can be added next, using the same DB.
+(You can optionally seed a consultant using the optional `SEED_CONSULTANT_*` env vars.)
