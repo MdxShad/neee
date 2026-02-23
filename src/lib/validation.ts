@@ -71,7 +71,11 @@ export const createAdmissionSchema = z.object({
   dob: z.string().optional().or(z.literal('')),
   gender: z.string().max(50).optional().or(z.literal('')),
   photoUrl: z.string().url().optional().or(z.literal('')),
-  documents: z.array(z.string().url()).optional().default([]),
+  documents: z.array(z.object({
+    name: z.string().min(1).max(255),
+    url: z.string().url(),
+    type: z.string().min(1).max(100)
+  })).optional().default([]),
 
   // Step 2
   universityId: z.string().min(1),
@@ -87,4 +91,36 @@ export const createAdmissionSchema = z.object({
   // Step 5
   agentExpenses: z.array(admissionExpenseSchema).default([]),
   consultancyExpenses: z.array(admissionExpenseSchema).default([])
+});
+
+
+export const consultancySettingsSchema = z.object({
+  consultancyName: z.string().min(2).max(200),
+  phone: z.string().max(50).optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal('')),
+  address: z.string().max(500).optional().or(z.literal('')),
+  terms: z.string().max(5000).optional().or(z.literal(''))
+});
+
+export const posterSchema = z.object({
+  imageUrl: z.string().url(),
+  courseTag: z.string().max(100).optional().or(z.literal('')),
+  universityTag: z.string().max(100).optional().or(z.literal('')),
+  isActive: z.coerce.boolean().optional().default(true)
+});
+
+export const ledgerPaymentSchema = z.object({
+  amount: z.coerce.number().int().positive(),
+  paidAt: z.string().min(1),
+  method: z.string().min(2).max(100),
+  reference: z.string().max(200).optional().or(z.literal('')),
+  notes: z.string().max(1000).optional().or(z.literal('')),
+  proofUrl: z.string().url()
+});
+
+export const studentPaymentSchema = z.object({
+  amount: z.coerce.number().int().positive(),
+  paidAt: z.string().min(1),
+  note: z.string().max(500).optional().or(z.literal('')),
+  proofUrl: z.string().url().optional().or(z.literal(''))
 });
