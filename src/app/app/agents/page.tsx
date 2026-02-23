@@ -13,7 +13,7 @@ import { createAgentAction, toggleAgentActiveAction } from './actions';
 
 export default async function AgentsPage() {
   const user = await requireUser();
-  if (![Role.SUPER_ADMIN, Role.CONSULTANT].includes(user.role)) {
+  if (user.role !== Role.SUPER_ADMIN && user.role !== Role.CONSULTANT) {
     return (
       <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900">
         Not allowed.
