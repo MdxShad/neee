@@ -76,7 +76,7 @@ model User {
 
   agentCommissions AgentCommission[] @relation("AgentCommissionAgent")
   agentLedgers     AgentLedger[]
-  paymentsCreated  Payment[]         @relation("PaymentCreatedBy")
+
 
   expensesCreated        Expense[]        @relation("ExpenseCreatedBy")
   studentPaymentsCreated StudentPayment[] @relation("StudentPaymentCreatedBy")
@@ -249,7 +249,6 @@ model UniversityLedger {
   amountPaid    Int           @default(0)
   status        PaymentStatus @default(PENDING)
 
-  payments Payment[] @relation("UniversityLedgerPayments")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -270,7 +269,6 @@ model AgentLedger {
   amountPaid       Int           @default(0)
   status           PaymentStatus @default(PENDING)
 
-  payments Payment[] @relation("AgentLedgerPayments")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
