@@ -38,6 +38,21 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!admission) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (!canView(user, admission)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+  const settings = await prisma.consultancySettings.findUnique({ where: { id: 'default' } });
+  const consultancyName = settings?.consultancyName?.trim() || 'EduConnect Consultancy';
+  const consultancyPhone = settings?.phone?.trim() || '';
+
+  const terms = settings?.terms?.trim()
+    ? settings.terms
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+    : [
+        '• (Add your consultancy terms & conditions here)',
+        '• (Example: Fee receipts and payment schedules can be attached separately)',
+        '• (Example: University fee is payable as per university rules)'
+      ];
+
   const pendingFee = Math.max(0, admission.displayFee - admission.amountReceived);
 
   const pdfDoc = await PDFDocument.create();
@@ -55,7 +70,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     const { width, height } = page.getSize();
 
     // Header
-    page.drawText('EduConnect — Admission Slip', { x: 50, y: height - 60, size: 18, font: fontBold });
+    page.drawText(`${consultancyName} — Admission Slip`, { x: 50, y: height - 60, size: 18, font: fontBold });
     page.drawText(copy.label, { x: width - 200, y: height - 55, size: 12, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
 
     page.drawLine({ start: { x: 50, y: height - 70 }, end: { x: width - 50, y: height - 70 }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
@@ -101,21 +116,17 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
     // Terms
     page.drawText('Terms & Conditions', { x: 50, y: height - 612, size: 12, font: fontBold });
-    const terms = [
-      '• (Add your consultancy terms & conditions here)',
-      '• (Example: Fee receipts and payment schedules can be attached separately)',
-      '• (Example: University fee is payable as per university rules)'
-    ];
     let ty = height - 632;
     for (const t of terms) {
-      page.drawText(t, { x: 55, y: ty, size: 10, font, color: rgb(0.1, 0.1, 0.1) });
+      page.drawText(t.startsWith('•') ? t : `• ${t}`, { x: 55, y: ty, size: 10, font, color: rgb(0.1, 0.1, 0.1) });
       ty -= 14;
     }
 
     // Footer
     page.drawLine({ start: { x: 50, y: 80 }, end: { x: width - 50, y: 80 }, thickness: 1, color: rgb(0.9, 0.9, 0.9) });
     page.drawText(`Generated for: ${admission.consultant.name}`, { x: 50, y: 60, size: 10, font });
-    page.drawText(`Admission ID: ${admission.id}`, { x: 50, y: 45, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
+    page.drawText(`Consultancy: ${consultancyName}${consultancyPhone ? ` | ${consultancyPhone}` : ''}`, { x: 50, y: 45, size: 10, font, color: rgb(0.2, 0.2, 0.2) });
+    page.drawText(`Admission ID: ${admission.id}`, { x: 50, y: 30, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
   }
 
   const pdfBytes = await pdfDoc.save();

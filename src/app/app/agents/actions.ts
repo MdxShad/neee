@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 
 export async function createAgentAction(formData: FormData) {
   const user = await requireUser();
-  if (![Role.SUPER_ADMIN, Role.CONSULTANT].includes(user.role)) {
+  if (user.role !== Role.SUPER_ADMIN && user.role !== Role.CONSULTANT) {
     throw new Error('Not allowed');
   }
 
@@ -52,7 +52,7 @@ export async function createAgentAction(formData: FormData) {
 
 export async function toggleAgentActiveAction(agentId: string) {
   const user = await requireUser();
-  if (![Role.SUPER_ADMIN, Role.CONSULTANT].includes(user.role)) {
+  if (user.role !== Role.SUPER_ADMIN && user.role !== Role.CONSULTANT) {
     throw new Error('Not allowed');
   }
 
@@ -70,7 +70,7 @@ export async function toggleAgentActiveAction(agentId: string) {
 
 export async function upsertAgentCommissionAction(formData: FormData) {
   const user = await requireUser();
-  if (![Role.SUPER_ADMIN, Role.CONSULTANT].includes(user.role)) {
+  if (user.role !== Role.SUPER_ADMIN && user.role !== Role.CONSULTANT) {
     throw new Error('Not allowed');
   }
 

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { formatINR } from '@/lib/money';
 import { addDailyExpenseAction, deleteDailyExpenseAction } from '../actions';
+import { FileUploader } from '@/components/ui/file-uploader';
 
 function expenseScopeWhere(user: { id: string; role: Role; parentId: string | null }) {
   if (user.role === Role.SUPER_ADMIN) return { type: ExpenseType.DAILY };

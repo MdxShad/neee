@@ -25,11 +25,14 @@ const NAV: NavItem[] = [
 
   // Reports
   { href: '/app/reports', label: 'Reports', show: (u) => u.role === Role.SUPER_ADMIN || u.role === Role.CONSULTANT || canAccess(u, 'REPORTS_VIEW') },
+  { href: '/app/posters', label: 'Posters', show: (u) => u.role === Role.CONSULTANT || u.role === Role.AGENT },
 
   // Admin-only
   { href: '/app/admin/universities', label: 'Universities', show: (u) => u.role === Role.SUPER_ADMIN },
   { href: '/app/admin/courses', label: 'Courses', show: (u) => u.role === Role.SUPER_ADMIN },
-  { href: '/app/admin/users', label: 'Users & Staff', show: (u) => u.role === Role.SUPER_ADMIN }
+  { href: '/app/admin/users', label: 'Users & Staff', show: (u) => u.role === Role.SUPER_ADMIN },
+  { href: '/app/admin/settings', label: 'Settings', show: (u) => u.role === Role.SUPER_ADMIN },
+  { href: '/app/admin/posters', label: 'Poster Admin', show: (u) => u.role === Role.SUPER_ADMIN }
 ];
 
 export function Sidebar({ user }: { user: AuthUser }) {

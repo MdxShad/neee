@@ -9,6 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { formatINR } from '@/lib/money';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { addStudentPaymentAction } from '../actions';
+import { FileUploader } from '@/components/ui/file-uploader';
 
 function canViewAdmission(user: { id: string; role: Role; parentId: string | null }, admission: { consultantId: string; agentId: string | null }) {
   if (user.role === Role.SUPER_ADMIN) return true;
@@ -38,7 +42,8 @@ export default async function AdmissionDetailPage({ params }: { params: { id: st
       expenses: true,
       universityLedger: true,
       agentLedger: true,
-      profitLedger: true
+      profitLedger: true,
+      studentPayments: { orderBy: { paidAt: "desc" } }
     }
   });
 
@@ -68,6 +73,9 @@ export default async function AdmissionDetailPage({ params }: { params: { id: st
           <Link href="/app/admissions" className="text-sm underline">Back</Link>
           <a href={`/api/admissions/${admission.id}/slip`} target="_blank" rel="noreferrer">
             <Button>Download Slip (PDF)</Button>
+          </a>
+          <a href={`/api/admissions/${admission.id}/receipt`} target="_blank" rel="noreferrer">
+            <Button variant="secondary">Download Fee Receipt</Button>
           </a>
         </div>
       </div>
@@ -176,7 +184,42 @@ export default async function AdmissionDetailPage({ params }: { params: { id: st
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Student Payments</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {user.role !== Role.AGENT ? (
+            <form action={addStudentPaymentAction.bind(null, admission.id)} className="grid gap-2 md:grid-cols-5">
+              <Input name="amount" type="number" min={1} step={1} placeholder="Amount" required />
+              <Input name="paidAt" type="date" required />
+              <Textarea name="note" rows={1} placeholder="Note" />
+              <FileUploader inputName="proofUrl" pathPrefix="payments/student" accept=".jpg,.jpeg,.png,.pdf" label="Upload proof" />
+              <Button type="submit">Add payment</Button>
+            </form>
+          ) : null}
+
+          <div className="overflow-x-auto">
+            <Table>
+              <THead>
+                <TR><TH>Date</TH><TH>Amount</TH><TH>Note</TH><TH>Proof</TH></TR>
+              </THead>
+              <TBody>
+                {admission.studentPayments.map((p) => (
+                  <TR key={p.id}>
+                    <TD>{new Date(p.paidAt).toLocaleDateString()}</TD>
+                    <TD>{formatINR(p.amount)}</TD>
+                    <TD>{p.note ?? '—'}</TD>
+                    <TD>{p.proofUrl ? <a className="underline text-sm" href={p.proofUrl} target="_blank" rel="noreferrer">Proof</a> : '—'}</TD>
+                  </TR>
+                ))}
+              </TBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+<div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Agent Expenses</CardTitle>

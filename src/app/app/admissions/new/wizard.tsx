@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { FileUploader } from '@/components/ui/file-uploader';
 import { formatINR } from '@/lib/money';
 import { calculateAdmissionFinancials } from '@/lib/calculations';
 import { createAdmissionAction } from '../actions';
@@ -23,6 +24,7 @@ type SimpleConsultant = { id: string; name: string; userId: string };
 type SimpleCommission = { agentId: string; courseId: string; type: CommissionType; value: number };
 
 type ExpenseRow = { title: string; amount: number; proofUrl?: string };
+type DocFile = { name: string; url: string; type: string };
 
 function StepPill({ active, label }: { active: boolean; label: string }) {
   return (
@@ -57,7 +59,7 @@ export function AdmissionWizard(props: {
   const [dob, setDob] = React.useState('');
   const [gender, setGender] = React.useState('');
   const [photoUrl, setPhotoUrl] = React.useState('');
-  const [documentsText, setDocumentsText] = React.useState('');
+  const [documents, setDocuments] = React.useState<DocFile[]>([]);
 
   // Step 2
   const [universityId, setUniversityId] = React.useState('');
@@ -129,12 +131,6 @@ export function AdmissionWizard(props: {
     setStep((s) => Math.max(1, s - 1));
   }
 
-  function normalizeDocs(text: string): string[] {
-    return text
-      .split(/\r?\n/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
 
   function addExpense(setter: React.Dispatch<React.SetStateAction<ExpenseRow[]>>) {
     setter((rows) => [...rows, { title: '', amount: 0, proofUrl: '' }]);
@@ -210,7 +206,7 @@ export function AdmissionWizard(props: {
           dob,
           gender,
           photoUrl,
-          documents: normalizeDocs(documentsText),
+          documents,
           universityId,
           courseId,
           amountReceived,
@@ -306,12 +302,30 @@ export function AdmissionWizard(props: {
               </Select>
             </div>
             <div className="space-y-1 md:col-span-2">
-              <Label>Photo URL (optional)</Label>
-              <Input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
+              <Label>Student Photo (optional)</Label>
+              <FileUploader
+                pathPrefix="admissions/photos"
+                accept=".jpg,.jpeg,.png"
+                label="Upload photo"
+                onUploaded={(f) => setPhotoUrl(f.url)}
+              />
+              {photoUrl ? <div className="text-xs text-zinc-600 break-all">{photoUrl}</div> : null}
             </div>
-            <div className="space-y-1 md:col-span-2">
-              <Label>Documents (optional — one URL per line)</Label>
-              <Textarea value={documentsText} onChange={(e) => setDocumentsText(e.target.value)} placeholder="https://…\nhttps://…" />
+            <div className="space-y-2 md:col-span-2">
+              <Label>Documents (optional)</Label>
+              <FileUploader
+                pathPrefix="admissions/documents"
+                accept=".jpg,.jpeg,.png,.pdf"
+                label="Upload document"
+                onUploaded={(f) => setDocuments((prev) => [...prev, { name: f.name, url: f.url, type: f.contentType }])}
+              />
+              {documents.length > 0 ? (
+                <div className="space-y-1">
+                  {documents.map((d, i) => (
+                    <div key={`${d.url}-${i}`} className="text-xs text-zinc-600 break-all">{d.name} — {d.url}</div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </CardContent>
         </Card>
@@ -473,8 +487,9 @@ export function AdmissionWizard(props: {
                       <Button type="button" variant="ghost" onClick={() => removeExpense(setAgentExpenses, idx)}>Remove</Button>
                     </div>
                     <div className="md:col-span-6">
-                      <Label>Proof URL (optional)</Label>
-                      <Input value={row.proofUrl ?? ''} onChange={(e) => updateExpense(setAgentExpenses, idx, { proofUrl: e.target.value })} placeholder="https://…" />
+                      <Label>Proof (optional)</Label>
+                      <FileUploader pathPrefix="expenses/admission" accept=".jpg,.jpeg,.png,.pdf" label="Upload proof" onUploaded={(f) => updateExpense(setAgentExpenses, idx, { proofUrl: f.url })} />
+                      {row.proofUrl ? <div className="text-xs text-zinc-600 break-all">{row.proofUrl}</div> : null}
                     </div>
                   </div>
                 ))}
@@ -509,8 +524,9 @@ export function AdmissionWizard(props: {
                       <Button type="button" variant="ghost" onClick={() => removeExpense(setConsultancyExpenses, idx)}>Remove</Button>
                     </div>
                     <div className="md:col-span-6">
-                      <Label>Proof URL (optional)</Label>
-                      <Input value={row.proofUrl ?? ''} onChange={(e) => updateExpense(setConsultancyExpenses, idx, { proofUrl: e.target.value })} placeholder="https://…" />
+                      <Label>Proof (optional)</Label>
+                      <FileUploader pathPrefix="expenses/admission" accept=".jpg,.jpeg,.png,.pdf" label="Upload proof" onUploaded={(f) => updateExpense(setConsultancyExpenses, idx, { proofUrl: f.url })} />
+                      {row.proofUrl ? <div className="text-xs text-zinc-600 break-all">{row.proofUrl}</div> : null}
                     </div>
                   </div>
                 ))}

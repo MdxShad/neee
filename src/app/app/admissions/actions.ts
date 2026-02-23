@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
-import { createAdmissionSchema } from '@/lib/validation';
+import { createAdmissionSchema, studentPaymentSchema } from '@/lib/validation';
 import { AdmissionSource, AdmissionStatus, CommissionType, ExpenseType, PaymentStatus, Role } from '@prisma/client';
 import { calculateAdmissionFinancials } from '@/lib/calculations';
 import { revalidatePath } from 'next/cache';
@@ -181,6 +181,16 @@ export async function createAdmissionAction(payload: unknown): Promise<{ id: str
       }
     });
 
+    await tx.studentPayment.create({
+      data: {
+        admissionId: created.id,
+        amount: created.amountReceived,
+        paidAt: new Date(),
+        note: 'Initial admission payment',
+        createdById: user.id
+      }
+    });
+
     return created;
   });
 
@@ -188,4 +198,40 @@ export async function createAdmissionAction(payload: unknown): Promise<{ id: str
   revalidatePath('/app');
 
   return { id: admission.id };
+}
+
+
+export async function addStudentPaymentAction(admissionId: string, formData: FormData): Promise<void> {
+  const user = await requireUser();
+  if (user.role === Role.AGENT) throw new Error('Not allowed');
+
+  const parsed = studentPaymentSchema.safeParse({
+    amount: formData.get('amount') ?? 0,
+    paidAt: String(formData.get('paidAt') ?? ''),
+    note: String(formData.get('note') ?? ''),
+    proofUrl: String(formData.get('proofUrl') ?? '')
+  });
+  if (!parsed.success) throw new Error('Invalid payment payload');
+
+  const admission = await prisma.admission.findUnique({ where: { id: admissionId } });
+  if (!admission) throw new Error('Admission not found');
+  if (user.role === Role.CONSULTANT && admission.consultantId !== user.id) throw new Error('Not allowed');
+  if (user.role === Role.STAFF && admission.consultantId !== (user.parentId ?? '__NONE__')) throw new Error('Not allowed');
+
+  await prisma.studentPayment.create({
+    data: {
+      admissionId,
+      amount: parsed.data.amount,
+      paidAt: new Date(parsed.data.paidAt),
+      note: parsed.data.note || null,
+      proofUrl: parsed.data.proofUrl || null,
+      createdById: user.id
+    }
+  });
+
+  const agg = await prisma.studentPayment.aggregate({ where: { admissionId }, _sum: { amount: true } });
+  await prisma.admission.update({ where: { id: admissionId }, data: { amountReceived: agg._sum.amount ?? 0 } });
+
+  revalidatePath(`/app/admissions/${admissionId}`);
+  revalidatePath('/app/admissions');
 }
